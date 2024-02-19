@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Fonction pour traiter les fichiers CSV avec Python
+traiter_csv_avec_python() {
+    # Utilisation d'un bloc <<EOF pour écrire un script Python à l'intérieur du script Bash
+    python3 <<EOF
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Lecture des données depuis le fichier CSV
+file_path = "$1"
+delimiter = "$2"
+data = np.genfromtxt(file_path, delimiter=delimiter)
+
+# Affichage des données lues
+print("Données lues depuis le fichier CSV :")
+print(data)
+
+# Demande à l'utilisateur des informations pour le tracé du graphique
+valeur_x = int(input("Valeur de l'axe X : "))
+valeur_y = int(input("Valeur de l'axe Y : "))
+title = input("Titre du graphique : ")
+axex = input("Titre de l'axe X : ")
+axey = input("Titre de l'axe Y : ")
+
+# Création et enregistrement du graphique avec Matplotlib
+plt.figure()
+plt.plot(data[:,valeur_x], data[:,valeur_y])
+plt.title(title)
+plt.xlabel(axex)
+plt.ylabel(axey)
+plt.savefig("$3")
+EOF
+}
+
+# Rentrer le chemin d'accès vers le dossier
+read -p "Rentrer le chemin d'accès vers le dossier : " directory
+
+# Gestion d'erreur de déclaration du chemin d'accès
+if [ ! -d "$directory" ]; then
+    echo "Le dossier n'existe pas."
+    exit 1
+fi
+
+# Changement de dossier
+cd "$directory" || exit 1
+
+# Rentrer le nombre de fichiers à traiter
+read -p "Nombre de fichiers à traiter : " nb_files
+
+# Vérification si le nombre est un entier
+if ! [[ $nb_files =~ ^-?[0-9]+$ ]]; then
+    echo "Il faut saisir un nombre entier."
+    exit 1
+fi
+
+# Boucle pour traiter chaque fichier
+for ((i = 1; i <= nb_files; i++)); do
+    
+    echo "convertir le fichier en .csv"
+    read -p "Rentrer le nom du fichier et son extension : " file
+    read -p "Rentrer le nom du fichier converti: " file2
+    mv "$file" "$file2.csv"
+    chemin_fichier="$file2.csv"
+    
+    echo "tracer le graphique souhaiter"
+    read -p "Rentrer le délimiteur pour le fichier "$chemin_fichier" : " delimiter
+    read -p "Rentrer le chemin de sortie et le nom du fichier image (avec extension .png) : " output_path
+    traiter_csv_avec_python "$chemin_fichier" "$delimiter" "$output_path"
+done
